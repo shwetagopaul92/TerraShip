@@ -97,7 +97,7 @@ TerraShip = function() {
                     mainPanel("",width=10,
                               tabsetPanel(
                                 tabPanel("Tools",
-                                         DT::dataTableOutput("tooldetails"),
+                                         verbatimTextOutput("tooldetails"),
                                          actionButton("runOnTerra","Run Analysis")),
                                 tabPanel("Monitor Workflow",
                                          DT::dataTableOutput("submissionDetails")),
@@ -162,10 +162,10 @@ TerraShip = function() {
           details = terra$getWorkspaceMethodConfig(input$workspaceNamespace,input$wdlnamespace
                                                    ,input$wdlnamespace, input$name)
           tooldetails = content(details)
-          df = list_to_df(tooldetails)
-          names(df) = c("Value","Name")
-          reordered_df = df[, c(2,1)]
-          output$tooldetails = DT::renderDataTable(reordered_df)
+          #df = list_to_df(tooldetails)
+          #names(df) = c("Value","Name")
+          #reordered_df = df[, c(2,1)]
+          output$tooldetails = renderPrint(str(tooldetails))
         })
       
         
