@@ -60,6 +60,16 @@ list_to_df <- function(listfordf){
   df
 }
 
+# function to monitor job submissions
+monitorSub <- function(workspaceNamespace, wdlnamespace, name){
+  subDetails = content(terra$listSubmissions(workspaceNamespace,wdlnamespace))
+  for(detail in subDetails){
+    mydetail = sapply(subDetails, function(x) {x$methodConfigurationName==name})
+  }
+  mytooldetail = as.data.frame(subDetails[mydetail])
+  mytooldetail
+}
+
 # Setup:
 
 ########################
@@ -90,7 +100,6 @@ TerraShip = function() {
                                          DT::dataTableOutput("tooldetails"),
                                          actionButton("runOnTerra","Run Analysis")),
                                 tabPanel("Monitor Workflow",
-                                         actionButton("monitorSubmission", "Monitor"),
                                          DT::dataTableOutput("submissionDetails")),
                                 tabPanel("About", h3("About"), HTML('<br> TerraShip is a shiny interface to help search, submit, monitor workflows. 
                                                                     <br>')
@@ -171,15 +180,10 @@ TerraShip = function() {
           showNotification("Job created!")
         })
         
-        # monitor job submission on 
-        observeEvent(input$monitorSubmission, {
-        subDetails = content(terra$listSubmissions(input$workspaceNamespace,input$wdlnamespace))
-        for(detail in subDetails){
-          mydetail = sapply(subDetails, function(x) {x$methodConfigurationName==input$name})
-        }
-        mytooldetail = as.data.frame(subDetails[mydetail])
-        output$submissionDetails = DT::renderDataTable(mytooldetail)
-        })
+        # monitor job submission
+        output$submissionDetails = DT::renderDataTable(monitorSub(input$workspaceNamespace, input$wdlnamespace,
+                                                                  input$name))
+        
         
         
   }
