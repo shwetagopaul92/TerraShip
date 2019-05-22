@@ -50,7 +50,6 @@ getBillingWorkspace <- function(){
 # function to convert tool details list to a dataframe
 list_to_df <- function(listfordf){
   if(!is.list(listfordf)) stop("it should be a list")
-  
   df <- list(list.element = listfordf)
   class(df) <- c("tbl_df", "data.frame")
   attr(df, "row.names") <- .set_row_names(length(listfordf))
@@ -157,11 +156,6 @@ TerraShip = function() {
           df = list_to_df(tooldetails)
           names(df) = c("Value","Name")
           reordered_df = df[, c(2,1)]
-          for(i in reordered_df$Value){
-            if(class(i)=="list"){
-              i = as.character(i)
-            }
-          }
           output$tooldetails = DT::renderDataTable(reordered_df)
         })
       
