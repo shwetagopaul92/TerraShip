@@ -47,6 +47,7 @@ getBillingWorkspace <- function(){
   getProjectNames(billingworkspace_name)
 }
 
+# function to convert tool details list to a dataframe
 list_to_df <- function(listfordf){
   if(!is.list(listfordf)) stop("it should be a list")
   
@@ -82,15 +83,14 @@ TerraShip = function() {
                                  uiOutput("billingwsnamespace_dropdown"),
                                  uiOutput("projectnames_dropdown"),
                                  uiOutput("toolnames_dropdown"),
-                                 actionButton("submitButton", "Submit"),
-                                 actionButton("resetButton", "Reset")
+                                 actionButton("submitButton", "Submit")
                     ),
                     mainPanel("",width=10,
                               tabsetPanel(
-                                tabPanel("Method",
-                                         DT::dataTableOutput("methoddetails"),
-                                         actionButton("runOnTerra","Run")),
-                                tabPanel("Monitor",
+                                tabPanel("Tools",
+                                         DT::dataTableOutput("tooldetails"),
+                                         actionButton("runOnTerra","Run Analysis")),
+                                tabPanel("Monitor Workflow",
                                          actionButton("monitorSubmission", "Monitor"),
                                          DT::dataTableOutput("submissionDetails")),
                                 tabPanel("About", h3("About"), HTML('<br> TerraShip is a shiny interface to help search, submit, monitor workflows. 
@@ -155,8 +155,14 @@ TerraShip = function() {
                                                    ,input$wdlnamespace, input$name)
           tooldetails = content(details)
           df = list_to_df(tooldetails)
+          names(df) = c("Value","Name")
           reordered_df = df[, c(2,1)]
-          output$methoddetails = DT::renderDataTable(reordered_df)
+          for(i in reordered_df$Value){
+            if(class(i)=="list"){
+              i = as.character(i)
+            }
+          }
+          output$tooldetails = DT::renderDataTable(reordered_df)
         })
       
         
@@ -177,7 +183,6 @@ TerraShip = function() {
         for(detail in subDetails){
           mydetail = sapply(subDetails, function(x) {x$methodConfigurationName==input$name})
         }
-        print(mydetail)
         mytooldetail = as.data.frame(subDetails[mydetail])
         output$submissionDetails = DT::renderDataTable(mytooldetail)
         })
