@@ -1,0 +1,13 @@
+Package: TerraShip
+Title: TerraShip
+Description: To help search, submit, monitor workflows.
+Version: 0.0.2
+Author: Shweta Gopaulakrishnan
+Depends: DT, AnVIL, shiny, httr, jsonlite
+Suggests: knitr
+Maintainer: Shweta Gopaulakrishnan <reshg@channing.harvard.edu>
+License: Artistic-2.0
+LazyLoad: yes 
+LazyData: yes
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1
