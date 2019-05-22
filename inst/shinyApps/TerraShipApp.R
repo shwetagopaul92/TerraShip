@@ -87,10 +87,10 @@ TerraShip = function() {
                     ),
                     mainPanel("",width=10,
                               tabsetPanel(
-                                tabPanel("ConfigureWorkflow",h3("Workflow & Configure"),
-                                         DT::dataTableOutput("methoddetails")),
-                                         actionButton("runOnTerra", "Run"),
-                                tabPanel("Monitor",h3("Monitor Job"),
+                                tabPanel("Method",
+                                         DT::dataTableOutput("methoddetails"),
+                                         actionButton("runOnTerra","Run")),
+                                tabPanel("Monitor",
                                          actionButton("monitorSubmission", "Monitor"),
                                          DT::dataTableOutput("submissionDetails")),
                                 tabPanel("About", h3("About"), HTML('<br> TerraShip is a shiny interface to help search, submit, monitor workflows. 
@@ -166,7 +166,7 @@ TerraShip = function() {
             workspaceNamespace=input$workspaceNamespace,
             workspaceName=input$wdlnamespace,
             methodConfigurationNamespace=input$wdlnamespace,
-            methodConfigurationName=input$wdlname,
+            methodConfigurationName=input$name,
             useCallCache=TRUE)
           showNotification("Job created!")
         })
