@@ -1,6 +1,6 @@
 ####################################
 # Name: TerraShip
-# Goal: To help search, submit, monitor workflows.
+# Goal: To help search, submit, monitor workflows on Terra.
 #
 ####################################
 
@@ -63,13 +63,54 @@ list_to_df <- function(listfordf){
 # function to monitor job submissions
 monitorSub <- function(workspaceNamespace, wdlnamespace, name){
   subDetails = content(terra$listSubmissions(workspaceNamespace,wdlnamespace))
-  for(detail in subDetails){
-    mydetail = sapply(subDetails, function(x) {x$methodConfigurationName==name})
-  }
-  mytooldetail = as.data.frame(subDetails[mydetail])
-  mytooldetail
+  #for(detail in subDetails){
+   # mydetail = sapply(subDetails, function(x) {x$methodConfigurationName==name})
+  #}
+  detailDF = do.call("rbind.data.frame",subDetails)
+  keepCols = c("methodConfigurationName","methodConfigurationNamespace","status","submissionDate","submissionId","submitter","useCallCache")
+  detailDF[detailDF$methodConfigurationName==name,keepCols]
+  #mytooldetail = as.data.frame(subDetails[mydetail])
+  #mytooldetail
+  #submissionId = as.character(mytooldetail$submissionId)
+  #monitorSub = terra$monitorSubmission(workspaceNamespace,wdlnamespace,submissionId)
+  #monitorLog = list_to_df(monitorSub)
+  
 }
 
+# function to abort jobs 
+abortSubmission <- function(workspaceNamespace, wdlnamespace, name){
+  subDetails = content(terra$listSubmissions(workspaceNamespace,wdlnamespace))
+  for(detail in subDetails){
+   mydetail = sapply(subDetails, function(x) {x$methodConfigurationName==name})
+  }
+  mytooldetail = as.data.frame(subDetails[mydetail])
+  submissionId = as.character(mytooldetail$submissionId)
+  abortLog = terra$abortSubmission(workspaceNamespace,wdlnamespace,submissionId)
+  abortLog
+}
+
+# function to print list elements as a bullets
+listElementBullet<-function(myListElement, myListElementName){
+  myhtml=paste0(myListElementName,"<ul>")
+  if(length(myListElement)>0){
+    for(i in 1:length(myListElement)){
+      myhtml=paste0(myhtml,"<li>",myListElement[[i]],"</li>")
+    }
+  }
+  myhtml=paste0(myhtml,"</ul>")
+  return(myhtml)
+}
+
+# function to print list elements as a bullets
+listBullet<-function(mylist,mylistnames){
+  myhtml=""
+  for(i in 1:length(mylistnames)){
+    myhtml=paste0(myhtml,listElementBullet(mylist[[i]],mylistnames[i]))
+  }
+  return(myhtml)
+}
+  
+  
 # Setup:
 
 ########################
@@ -95,13 +136,19 @@ TerraShip = function() {
                                  actionButton("submitButton", "Submit")
                     ),
                     mainPanel("",width=10,
+                              (tags$style(type="text/css",
+                                         ".shiny-output-error { visibility: hidden; }",
+                                         ".shiny-output-error:before { visibility: hidden; }")),
                               tabsetPanel(
-                                tabPanel("Tools",
+                                tabPanel("Tool Configuration",h3("Configuration"),
+                                         #htmlOutput("tooldetails"),
                                          verbatimTextOutput("tooldetails"),
                                          actionButton("runOnTerra","Run Analysis")),
-                                tabPanel("Monitor Workflow",
-                                         DT::dataTableOutput("submissionDetails")),
-                                tabPanel("About", h3("About"), HTML('<br> TerraShip is a shiny interface to help search, submit, monitor workflows. 
+                                tabPanel("Monitor Workflow",h3("Monitor"),
+                                         DT::dataTableOutput("submissionDetails"),
+                                         actionButton("abortSubmission","Abort"),
+                                         actionButton("refreshSubmission","Refresh")),
+                                tabPanel("About", h3("About"), HTML('<br> TerraShip is a shiny interface to help search, submit, monitor workflows on Terra. 
                                                                     <br>')
                                 )
                                 )
@@ -119,9 +166,8 @@ TerraShip = function() {
           mine = sapply(ws, function(x){x$accessLevel=="PROJECT_OWNER"})
           myws_details = ws[mine]
           # options for workspace namespace
-          workspace_name = lapply(myws_details, function(x) {x$workspace$namespace})  
+          workspacename = lapply(myws_details, function(x) {x$workspace$namespace})
           # from this get the names avaiable for the chosen billing(workspace) group
-          workspacename = as.list(workspace_name)
           selectInput("workspaceNamespace", 
                       "Select Workspace Namespace",
                       choices = workspacename
@@ -162,6 +208,8 @@ TerraShip = function() {
           details = terra$getWorkspaceMethodConfig(input$workspaceNamespace,input$wdlnamespace
                                                    ,input$wdlnamespace, input$name)
           tooldetails = content(details)
+          #output$tooldetails = renderUI(HTML(listBullet(tooldetails,names(tooldetails))))
+          
           #df = list_to_df(tooldetails)
           #names(df) = c("Value","Name")
           #reordered_df = df[, c(2,1)]
@@ -184,7 +232,22 @@ TerraShip = function() {
         output$submissionDetails = DT::renderDataTable(monitorSub(input$workspaceNamespace, input$wdlnamespace,
                                                                   input$name))
         
+        # abort job submission
+        observeEvent(input$abortSubmission, {
+          res = abortSubmission(input$workspaceNamespace, input$wdlnamespace, input$name)
+          if(res$status_code != 200){
+            showNotification("Aborting!")
+          }
+          else{
+            showNotification("Aborted!")
+          }
+        })
         
+        # refresh monitor tab to show updated details
+        observeEvent(input$refreshSubmission, {
+          output$submissionDetails = DT::renderDataTable(monitorSub(input$workspaceNamespace, input$wdlnamespace,
+                                                                    input$name))
+        })
         
   }
 )}
