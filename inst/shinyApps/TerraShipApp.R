@@ -1,7 +1,6 @@
 ####################################
 # Name: TerraShip
 # Goal: To help search, submit, monitor workflows on Terra.
-#
 ####################################
 
 ########################
@@ -63,18 +62,9 @@ list_to_df <- function(listfordf){
 # function to monitor job submissions
 monitorSub <- function(workspaceNamespace, wdlnamespace, name){
   subDetails = content(terra$listSubmissions(workspaceNamespace,wdlnamespace))
-  #for(detail in subDetails){
-   # mydetail = sapply(subDetails, function(x) {x$methodConfigurationName==name})
-  #}
   detailDF = do.call("rbind.data.frame",subDetails)
   keepCols = c("methodConfigurationName","methodConfigurationNamespace","status","submissionDate","submissionId","submitter","useCallCache")
   detailDF[detailDF$methodConfigurationName==name,keepCols]
-  #mytooldetail = as.data.frame(subDetails[mydetail])
-  #mytooldetail
-  #submissionId = as.character(mytooldetail$submissionId)
-  #monitorSub = terra$monitorSubmission(workspaceNamespace,wdlnamespace,submissionId)
-  #monitorLog = list_to_df(monitorSub)
-  
 }
 
 # function to abort jobs 
@@ -141,7 +131,6 @@ TerraShip = function() {
                                          ".shiny-output-error:before { visibility: hidden; }")),
                               tabsetPanel(
                                 tabPanel("Tool Configuration",h3("Configuration"),
-                                         #htmlOutput("tooldetails"),
                                          verbatimTextOutput("tooldetails"),
                                          actionButton("runOnTerra","Run Analysis")),
                                 tabPanel("Monitor Workflow",h3("Monitor"),

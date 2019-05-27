@@ -1,7 +1,7 @@
 Package: TerraShip
 Title: TerraShip
 Description: To help search, submit, monitor workflows on Terra.
-Version: 0.0.7
+Version: 0.0.8
 Author: Shweta Gopaulakrishnan
 Depends: DT, AnVIL, shiny, httr, jsonlite
 Suggests: knitr
