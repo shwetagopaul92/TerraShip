@@ -46,24 +46,14 @@ getBillingWorkspace <- function(){
   getProjectNames(billingworkspace_name)
 }
 
-# function to convert tool details list to a dataframe
-list_to_df <- function(listfordf){
-  if(!is.list(listfordf)) stop("it should be a list")
-  df <- list(list.element = listfordf)
-  class(df) <- c("tbl_df", "data.frame")
-  attr(df, "row.names") <- .set_row_names(length(listfordf))
-  
-  if (!is.null(names(listfordf))) {
-    df$name <- names(listfordf)
-  }
-  df
-}
-
 # function to monitor job submissions
 monitorSub <- function(workspaceNamespace, wdlnamespace, name){
   subDetails = content(terra$listSubmissions(workspaceNamespace,wdlnamespace))
   detailDF = do.call("rbind.data.frame",subDetails)
-  keepCols = c("methodConfigurationName","methodConfigurationNamespace","status","submissionDate","submissionId","submitter","useCallCache")
+  bucketName = getBucketName(workspaceNamespace, wdlnamespace)
+  link = paste0("https://console.cloud.google.com/storage/browser/",bucketName)
+  detailDF$bucketName = paste0("<a href='",link,"'>",bucketName,"</a>")
+  keepCols = c("methodConfigurationName","methodConfigurationNamespace","status","submissionDate","submissionId","submitter","useCallCache","bucketName")
   detailDF[detailDF$methodConfigurationName==name,keepCols]
 }
 
@@ -77,6 +67,33 @@ abortSubmission <- function(workspaceNamespace, wdlnamespace, name){
   submissionId = as.character(mytooldetail$submissionId)
   abortLog = terra$abortSubmission(workspaceNamespace,wdlnamespace,submissionId)
   abortLog
+}
+
+# get BucketName for viewing results link
+getBucketName <- function(workspaceNamespace, wdlnamespace){
+  ws = content(terra$listWorkspaces())
+  mine = sapply(ws, function(x){x$accessLevel=="PROJECT_OWNER"})
+  myws_details = ws[mine]
+  bucketList = lapply(myws_details, function(x) {
+    if(x$workspace$namespace==workspaceNamespace & x$workspace$name==wdlnamespace){
+      x$workspace$bucketName
+    }
+  })
+  bucketName = as.character(bucketList[-which(sapply(bucketList, is.null))])
+  bucketName
+}
+
+# function to convert tool details list to a dataframe
+list_to_df <- function(listfordf){
+  if(!is.list(listfordf)) stop("it should be a list")
+  df <- list(list.element = listfordf)
+  class(df) <- c("tbl_df", "data.frame")
+  attr(df, "row.names") <- .set_row_names(length(listfordf))
+  
+  if (!is.null(names(listfordf))) {
+    df$name <- names(listfordf)
+  }
+  df
 }
 
 # function to print list elements as a bullets
@@ -219,7 +236,7 @@ TerraShip = function() {
         
         # monitor job submission
         output$submissionDetails = DT::renderDataTable(monitorSub(input$workspaceNamespace, input$wdlnamespace,
-                                                                  input$name))
+                                                                  input$name), escape=FALSE)
         
         # abort job submission
         observeEvent(input$abortSubmission, {
@@ -235,8 +252,9 @@ TerraShip = function() {
         # refresh monitor tab to show updated details
         observeEvent(input$refreshSubmission, {
           output$submissionDetails = DT::renderDataTable(monitorSub(input$workspaceNamespace, input$wdlnamespace,
-                                                                    input$name))
+                                                                    input$name), escape=FALSE)
         })
+        
         
   }
 )}
