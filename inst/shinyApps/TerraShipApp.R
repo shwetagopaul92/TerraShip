@@ -46,15 +46,29 @@ getBillingWorkspace <- function(){
   getProjectNames(billingworkspace_name)
 }
 
+# fix method details
+fixWF<-function(mylistElement){
+  myrow=as.data.frame(mylistElement)
+  if(!("submissionEntity.entityType"%in%names(myrow))){
+    myrow[["submissionEntity.entityType"]]=NA
+    myrow[["submissionEntity.entityName"]]=NA
+  }
+  keepCols = c("methodConfigurationName","methodConfigurationNamespace", "submissionEntity.entityType","submissionEntity.entityName",
+               "status","submissionDate","submissionId","submitter","useCallCache")
+  
+  myrow[,keepCols]
+}
+
 # function to monitor job submissions
 monitorSub <- function(workspaceNamespace, wdlnamespace, name){
   subDetails = content(terra$listSubmissions(workspaceNamespace,wdlnamespace))
-  detailDF = do.call("rbind.data.frame",subDetails)
+  tempDF=lapply(subDetails,fixWF)
+  detailDF = do.call("rbind.data.frame",tempDF)
   bucketName = getBucketName(workspaceNamespace, wdlnamespace)
   link = paste0("https://console.cloud.google.com/storage/browser/",bucketName)
   detailDF$bucketName = paste0("<a href='",link,"'>",bucketName,"</a>")
-  keepCols = c("methodConfigurationName","methodConfigurationNamespace","status","submissionDate","submissionId","submitter","useCallCache","bucketName")
-  detailDF[detailDF$methodConfigurationName==name,keepCols]
+  #keepCols = c("methodConfigurationName","methodConfigurationNamespace","status","submissionDate","submissionId","submitter","useCallCache","bucketName")
+  detailDF[detailDF$methodConfigurationName==name,]
 }
 
 # function to abort jobs 
